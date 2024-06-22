@@ -14,14 +14,14 @@
   },
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "desktopCapture",
+    "tabs"
   ],
   "content_scripts": [
     {
       "js": ["scripts/content.js"],
-      "matches": [
-        "<all_urls>"
-      ]
+      "matches": ["<all_urls>"]
     }
   ],
   "action": {
@@ -39,5 +39,8 @@
         "mac": "Command+B"
       }
     }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
   }
 }

@@ -1,3 +1,31 @@
+let stream = null;
+
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.action === "start-capture") {
+    const { streamId } = message;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          mandatory: {
+            chromeMediaSource: 'desktop',
+            chromeMediaSourceId: streamId,
+          }
+        }
+      });
+      console.log("Stream captured:", stream);
+    } catch (error) {
+      console.error("Error capturing stream:", error);
+    }
+  } else if (message.action === "stop-capture") {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      console.log("Stream stopped");
+      stream = null;
+    }
+  }
+});
+
 const article = document.querySelector("article");
 
 // `document.querySelector` may return null if the selector doesn't match anything.

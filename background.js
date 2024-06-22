@@ -1,3 +1,5 @@
+let stream = null;
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.action.setBadgeText({
     text: "OFF",
@@ -31,10 +33,20 @@ chrome.action.onClicked.addListener(async (tab) => {
         target: { tabId: tab.id },
       });
       console.log("CSS inserted successfully");
+
+      // Trigger the desktop capture API
+      chrome.desktopCapture.chooseDesktopMedia(["screen", "window", "tab"], tab, (streamId) => {
+        if (streamId) {
+          console.log("Stream ID:", streamId);
+          chrome.tabs.sendMessage(tab.id, { action: "start-capture", streamId });
+        } else {
+          console.log("User canceled the media picker");
+        }
+      });
     } catch (error) {
       console.error("Failed to insert CSS:", error);
     }
-  } else if (nextState === "OFF") {
+  } else {
     // Remove the CSS file when the user turns the extension off
     try {
       await chrome.scripting.removeCSS({
@@ -42,6 +54,9 @@ chrome.action.onClicked.addListener(async (tab) => {
         target: { tabId: tab.id },
       });
       console.log("CSS removed successfully");
+
+      // Send message to content script to stop capture
+      chrome.tabs.sendMessage(tab.id, { action: "stop-capture" });
     } catch (error) {
       console.error("Failed to remove CSS:", error);
     }
