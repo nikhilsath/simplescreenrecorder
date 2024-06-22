@@ -35,10 +35,17 @@ chrome.action.onClicked.addListener(async (tab) => {
       console.log("CSS inserted successfully");
 
       // Trigger the desktop capture API
-      chrome.desktopCapture.chooseDesktopMedia(["screen", "window", "tab"], tab, (streamId) => {
+      chrome.desktopCapture.chooseDesktopMedia(["tab", "window", "screen"], tab, (streamId) => {
         if (streamId) {
           console.log("Stream ID:", streamId);
-          chrome.tabs.sendMessage(tab.id, { action: "start-capture", streamId });
+          
+          // Ensure the content script is loaded before sending a message
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ["scripts/content.js"] // Correct path to content.js
+          }).then(() => {
+            chrome.tabs.sendMessage(tab.id, { action: "start-capture", streamId });
+          }).catch(err => console.error("Failed to execute script:", err));
         } else {
           console.log("User canceled the media picker");
         }
@@ -56,7 +63,12 @@ chrome.action.onClicked.addListener(async (tab) => {
       console.log("CSS removed successfully");
 
       // Send message to content script to stop capture
-      chrome.tabs.sendMessage(tab.id, { action: "stop-capture" });
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ["scripts/content.js"] // Correct path to content.js
+      }).then(() => {
+        chrome.tabs.sendMessage(tab.id, { action: "stop-capture" });
+      }).catch(err => console.error("Failed to execute script:", err));
     } catch (error) {
       console.error("Failed to remove CSS:", error);
     }
